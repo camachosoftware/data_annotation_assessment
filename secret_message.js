@@ -1,3 +1,7 @@
+// npm init
+// npm install cheerio
+// node filename.js '{googleUrl}'
+
 const https = require('https');
 const fs = require('fs');
 const cheerio = require('cheerio');
@@ -44,12 +48,8 @@ async function parseCoordinates() {
   return coordinates;
 }
 
-async function decodeSecretMessage(url) {
-  let coordinates, currentY, highestX, highestY, line = '', currentX = 0;
-
-  await downloadDocument(url);
-  coordinates = await parseCoordinates();
-  coordinates = coordinates.sort((coordinate1, coordinate2) => {
+async function sortCoordinates(coordinates) {
+  return coordinates.sort((coordinate1, coordinate2) => {
     const xCoordinate1 = parseInt(coordinate1[0]),
       yCoordinate1 = parseInt(coordinate1[2]),
       xCoordinate2 = parseInt(coordinate2[0]),
@@ -58,10 +58,17 @@ async function decodeSecretMessage(url) {
 
     return yDiff === 0 ? xCoordinate1 - xCoordinate2 : yDiff;
   });
+}
 
-  highestX = Math.max(...coordinates.map(cmd => parseInt(cmd[0])));
-  highestY = Math.max(...coordinates.map(cmd => parseInt(cmd[cmd.length - 1])));
-  currentY = highestY;
+async function decodeSecretMessage(url) {
+  let coordinates, currentY,
+    line = '',
+    currentX = 0;
+
+  await downloadDocument(url);
+  coordinates = await parseCoordinates();
+  coordinates = await sortCoordinates(coordinates);
+  currentY = coordinates[0][coordinates[0].length - 1];
 
   coordinates.forEach(cmd => {
     const yCoordinate = cmd[cmd.length - 1],
